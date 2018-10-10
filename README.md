@@ -2,6 +2,8 @@
 
 The script works with load/displacement/time data from Hysitron PI, which is exported to a txt file. The load/displacement is plotted and combined with the video recording.
 
+![Example screenshot of the resulting video](example.png)
+
 ## Requirements
 
 1. gnuplot
