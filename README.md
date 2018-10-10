@@ -10,7 +10,7 @@ The script works with load/displacement/time data from Hysitron PI, which is exp
 2. ffmpeg
 3. bash
 
-## Installation
+## Installation notes
 
 The gnuplot script should be located in ~/bin/ folder.
 
