@@ -11,6 +11,8 @@ i=1
 if (strlen(preload) !=0 ) { load preload; }
 CONF="w p pt 7 ps 0.1 lc rgb 'gray70' not";
 CONF2="w lp pt 7 ps 0.4 lw 0.2 lc rgb 'gray10' not"
+CONFRED="w p pt 7 ps 0 lc rgb 'white' not"
+if (reddot=="1") {CONFRED="w p pt 7 ps 1.5 lc rgb 'red' not"}
 #infile="4500nm 03 DC.txt"
 if (strlen(infile) == 0) { print "No input file specified. Exiting..."; exit; }
 if (strlen(tit) == 0) { tit=infile; print "No title specified. Setting to '".tit."'"; }
@@ -42,7 +44,7 @@ do for [i=1+stepp:maxidx:stepp] {
     if (strlen(preload) !=0 ) { load preload; }
     set style rect fc rgb "white" fs solid 1 noborder
     set label 1 sprintf("Test time: %.6f sec", timenow) at screen 0, screen 0 offset character 1, character 1 font ",12"
-    if (verbose=="1") {plot infile_f u @USNG every (ceil(i/1E4))::1::i @CONF2;}
+    if (verbose=="1") {plot infile_f u @USNG every (ceil(i/1E4))::1::i @CONF2, infile_f u @USNG every (ceil(i/1E4))::i::i @CONFRED;}
     if (i+stepp>=maxidx) {plot infile_f u @USNG @CONF2;}
     set term pngcairo size 800,600;
     set output sprintf('%s/%s-%06.0f.png',video_f,infile,j);
@@ -51,7 +53,7 @@ do for [i=1+stepp:maxidx:stepp] {
     system(sprintf("echo -ne \"\\r\\e[1mGenerating plots...\\e[0m %.2f%%\"",message))
     set multiplot;
     set object 1 rect from screen 0.15, screen 0.58 to screen 0.47,screen 0.88
-    plot infile_f u @USNG every ::1::i @CONF2;
+    plot infile_f u @USNG every ::1::i @CONF2, infile_f u @USNG every ::i::i @CONFRED;
     unset object 1;
     unset object 2;
     unset label 1;

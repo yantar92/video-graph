@@ -12,6 +12,7 @@ function show_help {
 \t--skip_plot: Skip plot generation
 \t--force: overwrite video files without asking
 \t--nomini: do not plot mini graph
+\t--noreddot: do not plot red dot at the last point of the graph
 \t\e[1minput_file: plain text data file, first two columns will be plotted, third column is used as a time to align with video\e[0m"
 }
 
@@ -58,6 +59,7 @@ MERGE="0"
 SKIP_PLOT="0"
 OVERWRITE=""
 MINI="1"
+REDDOT="1"
 
 while [[ $# -gt 0 ]]
 do
@@ -74,7 +76,7 @@ do
 	    PRELOAD="$2"
 	    [[ ! -e "$PRELOAD" ]] && echo -e "\e[91m\e[1mFatal error:\e[0m File not exists \"$PRELOAD\"\e[0m" && exit 2
 	    shift # past argument
-	;;
+	    ;;
 	-v|--video)
 	    VIDEO="$2"
 	    [[ ! -e "$VIDEO" ]] && echo -e "\e[91m\e[1mFatal error:\e[0m File not exists \"$VIDEO\"\e[0m" && exit 2
@@ -100,6 +102,9 @@ do
 	    ;;
 	--nomini)
 	    MINI="0"
+	    ;;
+	--noreddot)
+	    REDDOT="0"
 	    ;;
 	*)
 	    infile="$key"
@@ -136,7 +141,7 @@ if [[ "$MERGE" == "0" ]]; then
 	[[ -d "$VIDEO_F" ]] || mkdir "$VIDEO_F"
     fi
     [[ "$stepP" == "" ]] && stepP=100
-#    rate="`echo \"200 / $stepP\" | bc -l`"
+    #    rate="`echo \"200 / $stepP\" | bc -l`"
     sed '/^\s*$/d' "$infile" > "$infile.infile.tmp"
 fi
 
@@ -146,7 +151,7 @@ echo -e "\e[92m\e[1mStarting...\e[0m" && echo -e "  Input file: \"$infile\"\e[0m
 if [[ "$MERGE" == "0" ]]; then
     if [[ "$SKIP_PLOT" == "0" ]]; then
 	echo -n -e "\e[1mGenerating plots... \e[0m"
-	gnuplot -e "video_f=\"$VIDEO_F\"; infile_f=\"$(basename "$infile").infile.tmp\"; infile='$(basename "$infile")'; tit='$TITLE'; stepp=$stepP; preload=\"$PRELOAD\"; verbose=\"$VERBOSE\"; mini=\"$MINI\";" ~/bin/video-graph.gnuplot 2>/dev/null || TERMINATED=1
+	gnuplot -e "video_f=\"$VIDEO_F\"; infile_f=\"$(basename "$infile").infile.tmp\"; infile='$(basename "$infile")'; tit='$TITLE'; stepp=$stepP; preload=\"$PRELOAD\"; verbose=\"$VERBOSE\"; mini=\"$MINI\"; reddot=\"$REDDOT\"" ~/bin/video-graph.gnuplot 2>/dev/null || TERMINATED=1
 	if [[ "$TERMINATED" == "1" ]]; then
 	    echo -e "\r\e[1mGenerating plots...\e[0m \e[1m\e[91mfail \e[0m"
 	    confirm "Delete all the generated graphs?" && del_png
@@ -181,15 +186,15 @@ echo -e "\e[1mMerging videos...\e[0m"
 ffmpeg $FORCE -v error -hide_banner -i "$VIDEO_GRAPH" -i "$VIDEO" -f lavfi -i "anullsrc=cl=1" -shortest -filter_complex "[0:v]setpts=PTS-STARTPTS, pad=width=iw*2.15:height=ih*1.1:x=iw*0.05:y=0.05*ih:color=white[bg]; [1:v]setpts=PTS-STARTPTS, scale=w=min(800\,600/ih*iw):h=-1[fg]; [bg][fg]overlay=x=trunc(W*0.75-w/2):y=trunc(H*0.5-h*0.5)" -c:v libx264 "$VIDEO_SBS" || TERMINATED=1
 
 if [[ "$TERMINATED" == "1" ]]; then
-   echo -e "\e[1mMerging videos...\e[0m \e[1m\e[91mfail \e[0m"
-   confirm "Delete \"$VIDEO_SBS\"?" && del_v2
-   confirm "Delete \"$VIDEO_GRAPH\"?" && del_v1
-   confirm "Delete all the generated graphs?" && del_png
-   clean_files
-   echo -e "\n\e[1m\e[91mTerminated:\e[0m Problem mergin videos\e[0m"
-   exit 2
+    echo -e "\e[1mMerging videos...\e[0m \e[1m\e[91mfail \e[0m"
+    confirm "Delete \"$VIDEO_SBS\"?" && del_v2
+    confirm "Delete \"$VIDEO_GRAPH\"?" && del_v1
+    confirm "Delete all the generated graphs?" && del_png
+    clean_files
+    echo -e "\n\e[1m\e[91mTerminated:\e[0m Problem mergin videos\e[0m"
+    exit 2
 fi
-   
+
 echo -e "\r\e[1mMerging videos...\e[0m \e[92m\e[1mdone   \e[0m"
 del_png
 clean_files
