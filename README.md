@@ -40,6 +40,8 @@ video-graph.sh [-h|--help] [-t|--title <"string">] [-s|--step <number>] [-l|--lo
 
 	--nomini: do not plot mini graph
 
+	--noreddot: do not plot red dot at the last point of the graph
+
 	input_file: plain text data file, first two columns will be plotted, 
               third column is used as a time to align with video
 ````
