@@ -30,6 +30,8 @@ video-graph.sh [-h|--help] [-t|--title <"string">] [-s|--step <number>] [-l|--lo
 
 	-v|--video: Set video file name. Default: input_file_name.mp4
 
+	--script: Path to the gnuplot script. Default: ~/bin/video-graph.gnuplot
+    
 	--verbose: Show the last generated plot
 
 	--merge: Only merge videos. Do not generate images
