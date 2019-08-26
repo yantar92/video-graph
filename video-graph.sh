@@ -1,7 +1,7 @@
 #!/bin/bash
 function show_help {
     echo -e "\n\e[37m\e[1mMake side by side video of plot and movie.
-\e[0m\e[1mUsage\e[0m: `basename $0` [-h|--help] [-t|--title <\"string\">] [-s|--step <number>] [-l|--load <\"path\">] [-v|--video <\"path\">] [--verbose] [--merge] [--skip_plot] [--force] input_file
+\e[0m\e[1mUsage\e[0m: $(basename "$0") [-h|--help] [-t|--title <\"string\">] [-s|--step <number>] [-l|--load <\"path\">] [-v|--video <\"path\">] [--verbose] [--merge] [--skip_plot] [--force] input_file
 \t-h|--help: Show help
 \t-t|--title: Set plot title. Default: input_file
 \t-s|--step: Set number of plot points added per video frame. Default: 100
@@ -35,16 +35,16 @@ function del_png {
 }
 
 function clean_files {
-    rmdir "$VIDEO_F" 2>&1 >/dev/null
+    rmdir "$VIDEO_F" >/dev/null 2>&1 
     [[ -e "$infile.infile.tmp" ]] && rm "./$infile.infile.tmp"
 }
 
 function del_v1 {
-    rm "$VIDEO_GRAPH" 2>&1 > /dev/null
+    rm "$VIDEO_GRAPH" > /dev/null 2>&1 
 }
 
 function del_v2 {
-    rm "$VIDEO_SBS" 2>&1 > /dev/null
+    rm "$VIDEO_SBS" > /dev/null 2>&1 
 }
 
 [[ $# == 0 ]] && show_help && exit
