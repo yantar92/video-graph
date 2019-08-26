@@ -5,7 +5,8 @@ function show_help {
 \t-h|--help: Show help
 \t-t|--title: Set plot title. Default: input_file
 \t-s|--step: Set number of plot points added per video frame. Default: 100
-\t-l|--load: Set gnuplot file to preload 
+\t-l|--load: Set gnuplot file to preload
+\t--script: Path to the gnuplot script. Default: ~/bin/video-graph.gnuplot 
 \t-v|--video: Set video file name. Default: input_file_name.mp4
 \t--verbose: Show the last generated plot
 \t--merge: Only merge videos. Do not generate images
@@ -60,6 +61,7 @@ SKIP_PLOT="0"
 OVERWRITE=""
 MINI="1"
 REDDOT="1"
+GNUPLOT_SCRIPT="$HOME/bin/video-graph.gnuplot"
 
 while [[ $# -gt 0 ]]
 do
@@ -72,6 +74,10 @@ do
 	    TITLE="$2"
 	    shift # past argument
 	    ;;
+        --script)
+            GNUPLOT_SCRIPT="$2"
+            shift # past argument
+            ;;
 	-l|--load)
 	    PRELOAD="$2"
 	    [[ ! -e "$PRELOAD" ]] && echo -e "\e[91m\e[1mFatal error:\e[0m File not exists \"$PRELOAD\"\e[0m" && exit 2
@@ -151,7 +157,7 @@ echo -e "\e[92m\e[1mStarting...\e[0m" && echo -e "  Input file: \"$infile\"\e[0m
 if [[ "$MERGE" == "0" ]]; then
     if [[ "$SKIP_PLOT" == "0" ]]; then
 	echo -n -e "\e[1mGenerating plots... \e[0m"
-	gnuplot -e "video_f=\"$VIDEO_F\"; infile_f=\"$(basename "$infile").infile.tmp\"; infile='$(basename "$infile")'; tit='$TITLE'; stepp=$stepP; preload=\"$PRELOAD\"; verbose=\"$VERBOSE\"; mini=\"$MINI\"; reddot=\"$REDDOT\"" ~/bin/video-graph.gnuplot 2>/dev/null || TERMINATED=1
+	gnuplot -e "video_f=\"$VIDEO_F\"; infile_f=\"$(basename "$infile").infile.tmp\"; infile='$(basename "$infile")'; tit='$TITLE'; stepp=$stepP; preload=\"$PRELOAD\"; verbose=\"$VERBOSE\"; mini=\"$MINI\"; reddot=\"$REDDOT\"" $GNUPLOT_SCRIPT 2>/dev/null || TERMINATED=1
 	if [[ "$TERMINATED" == "1" ]]; then
 	    echo -e "\r\e[1mGenerating plots...\e[0m \e[1m\e[91mfail \e[0m"
 	    confirm "Delete all the generated graphs?" && del_png
