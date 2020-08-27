@@ -26,6 +26,8 @@ video-graph.sh [-h|--help] [-t|--title <"string">] [-s|--step <number>] [-l|--lo
 
 	-s|--step: Set number of plot points added per video frame. Default: 100
 
+	--delay: Relative delay of the load-displacement data to video, in seconds. Default: 0
+
 	-l|--load: Set gnuplot file to preload 
 
 	-v|--video: Set video file name. Default: input_file_name.mp4
@@ -33,6 +35,8 @@ video-graph.sh [-h|--help] [-t|--title <"string">] [-s|--step <number>] [-l|--lo
 	--script: Path to the gnuplot script. Default: ~/bin/video-graph.gnuplot
     
 	--verbose: Show the last generated plot
+
+	--debug: Show debug info
 
 	--merge: Only merge videos. Do not generate images
 
