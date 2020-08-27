@@ -49,7 +49,7 @@ do for [i=1+stepp:maxidx:stepp] {
     if (i+stepp>=maxidx) {plot infile_f u @USNG @CONF2;}
     set term pngcairo size 800,600;
     set output sprintf('%s/%s-%06.0f.png',video_f,infile,j);
-    system(sprintf("echo -e \"file '%s-%06.0f.png'\\nduration %f\" >> \"%s/list.txt\"",infile,j,(timenow-prevtime),video_f)) #duration is in micro sec
+    system(sprintf("echo \"file '%s-%06.0f.png'\\nduration %f\" >> \"%s/list.txt\"",infile,j,(timenow-prevtime),video_f)) #duration is in micro sec
     message=i*(i+1)*100.0/maxidx/(maxidx+1);
     system(sprintf("echo -ne \"\\r\\e[1mGenerating plots...\\e[0m %.2f%%\"",message))
     set multiplot;
@@ -76,6 +76,6 @@ do for [i=1+stepp:maxidx:stepp] {
     unset multiplot
 }
 #extra file according to http://trac.ffmpeg.org/wiki/Slideshow
-system(sprintf("echo -e \"file '%s-%06.0f.png'\" >> \"%s/list.txt\"",infile,j,video_f))
+system(sprintf("echo \"file '%s-%06.0f.png'\" >> \"%s/list.txt\"",infile,j,video_f))
 
 system("rm fit.log")
