@@ -16,6 +16,7 @@ if (reddot=="1") {CONFRED="w p pt 7 ps 1.5 lc rgb 'red' not"}
 #infile="4500nm 03 DC.txt"
 if (strlen(infile) == 0) { print "No input file specified. Exiting..."; exit; }
 if (strlen(tit) == 0) { tit=infile; print "No title specified. Setting to '".tit."'"; }
+if (strlen(delay) == 0) { delay=0 }
 #print sprintf("Starting plot generation...\nInput file name = \"%s\"\nPlot title = \"%s\"\nStep = %d",infile, tit, stepp)
 
 #infile_f=".infile.tmp"
@@ -38,7 +39,7 @@ do for [i=1+stepp:maxidx:stepp] {
     set title tit font ",14";
     set size 1,1;
     set origin 0,0;
-    stats infile_f every ::1::i u 3 nooutput
+    stats infile_f every ::1::i u ($3+delay) nooutput
     prevtime = timenow
     timenow = STATS_max
     if (strlen(preload) !=0 ) { load preload; }

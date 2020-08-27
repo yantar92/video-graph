@@ -1,14 +1,16 @@
 #!/bin/bash
 function show_help {
     echo -e "\n\e[37m\e[1mMake side by side video of plot and movie.
-\e[0m\e[1mUsage\e[0m: $(basename "$0") [-h|--help] [-t|--title <\"string\">] [-s|--step <number>] [-l|--load <\"path\">] [-v|--video <\"path\">] [--verbose] [--merge] [--skip_plot] [--force] input_file
+\e[0m\e[1mUsage\e[0m: $(basename "$0") [-h|--help] [-t|--title <\"string\">] [-s|--step <number>] [-l|--load <\"path\">] [-v|--video <\"path\">] [--verbose] [--debug] [--merge] [--skip_plot] [--force] input_file
 \t-h|--help: Show help
 \t-t|--title: Set plot title. Default: input_file
 \t-s|--step: Set number of plot points added per video frame. Default: 100
+\t--delay: Relative delay of the load-displacement data to video, in seconds. Default: 0
 \t-l|--load: Set gnuplot file to preload
 \t--script: Path to the gnuplot script. Default: ~/bin/video-graph.gnuplot 
 \t-v|--video: Set video file name. Default: input_file_name.mp4
 \t--verbose: Show the last generated plot
+\t--debug: Show debug info
 \t--merge: Only merge videos. Do not generate images
 \t--skip_plot: Skip plot generation
 \t--force: overwrite video files without asking
@@ -51,11 +53,13 @@ function del_v2 {
 [[ $# == 0 ]] && show_help && exit
 
 TITLE=""
+DELAY="0"
 PRELOAD=""
 VIDEO=""
 stepP=""
 infile=""
 VERBOSE="0"
+DEBUG=""
 MERGE="0"
 SKIP_PLOT="0"
 OVERWRITE=""
@@ -74,6 +78,10 @@ do
 	    TITLE="$2"
 	    shift # past argument
 	    ;;
+        --delay)
+            DELAY="$2"
+            shift # past argument
+            ;;
         --script)
             GNUPLOT_SCRIPT="$2"
             shift # past argument
@@ -91,6 +99,9 @@ do
 	--verbose)
 	    VERBOSE="1"
 	    ;;
+        --debug)
+            DEBUG="1"
+            ;;
 	--merge)
 	    MERGE="1"
 	    ;;
@@ -157,7 +168,11 @@ echo -e "\e[92m\e[1mStarting...\e[0m" && echo -e "  Input file: \"$infile\"\e[0m
 if [[ "$MERGE" == "0" ]]; then
     if [[ "$SKIP_PLOT" == "0" ]]; then
 	echo -n -e "\e[1mGenerating plots... \e[0m"
-	gnuplot -e "video_f=\"$VIDEO_F\"; infile_f=\"$(basename "$infile").infile.tmp\"; infile='$(basename "$infile")'; tit='$TITLE'; stepp=$stepP; preload=\"$PRELOAD\"; verbose=\"$VERBOSE\"; mini=\"$MINI\"; reddot=\"$REDDOT\"" $GNUPLOT_SCRIPT 2>/dev/null || TERMINATED=1
+        if [[ -z "$DEBUG" ]]; then
+	    gnuplot -e "delay=\"$DELAY\"; video_f=\"$VIDEO_F\"; infile_f=\"$(basename "$infile").infile.tmp\"; infile='$(basename "$infile")'; tit='$TITLE'; stepp=$stepP; preload=\"$PRELOAD\"; verbose=\"$VERBOSE\"; mini=\"$MINI\"; reddot=\"$REDDOT\"" $GNUPLOT_SCRIPT 2>/dev/null || TERMINATED=1
+        else
+            gnuplot -e "delay=\"$DELAY\"; video_f=\"$VIDEO_F\"; infile_f=\"$(basename "$infile").infile.tmp\"; infile='$(basename "$infile")'; tit='$TITLE'; stepp=$stepP; preload=\"$PRELOAD\"; verbose=\"$VERBOSE\"; mini=\"$MINI\"; reddot=\"$REDDOT\"" $GNUPLOT_SCRIPT || TERMINATED=1    
+	fi
 	if [[ "$TERMINATED" == "1" ]]; then
 	    echo -e "\r\e[1mGenerating plots...\e[0m \e[1m\e[91mfail \e[0m"
 	    confirm "Delete all the generated graphs?" && del_png
@@ -172,7 +187,11 @@ if [[ "$MERGE" == "0" ]]; then
     echo -e "\e[1mCreating graph video... \e[0m"
     cp "$VIDEO_F/$infile.png" "$VIDEO_PNG"
     #    ffmpeg $OVERWRITE -v error -hide_banner -r $rate -i "$VIDEO_F/$infile-%06d.png" -codec png "$VIDEO_GRAPH" || TERMINATED=1
-    ffmpeg $OVERWRITE -safe 0 -v error -hide_banner -f concat -i "$VIDEO_F/list.txt" "$VIDEO_GRAPH" || TERMINATED=1
+    if [[ -z "$DEBUG" ]]; then
+	ffmpeg $OVERWRITE -safe 0 -hide_banner -f concat -i "$VIDEO_F/list.txt" "$VIDEO_GRAPH" || TERMINATED=1
+    else
+	ffmpeg $OVERWRITE -safe 0 -hide_banner -f concat -i "$VIDEO_F/list.txt" "$VIDEO_GRAPH" || TERMINATED=1	
+    fi	
 
     if [[ "$TERMINATED" == "1" ]]; then
 	echo -e "\r\e[1mCreating graph video...\e[0m \e[1m\e[91mfail \e[0m"
@@ -184,24 +203,28 @@ if [[ "$MERGE" == "0" ]]; then
     fi
     
 
-    echo -e "\r\e[1mCreating graph video...\e[0m \e[92m\e[1mdone   \e[0m"
-fi
+       echo -e "\r\e[1mCreating graph video...\e[0m \e[92m\e[1mdone   \e[0m"
+    fi
 
 
-echo -e "\e[1mMerging videos...\e[0m"
-ffmpeg $FORCE -v error -hide_banner -i "$VIDEO_GRAPH" -i "$VIDEO" -f lavfi -i "anullsrc=cl=1" -shortest -filter_complex "[0:v]setpts=PTS-STARTPTS, pad=width=iw*2.15:height=ih*1.1:x=iw*0.05:y=0.05*ih:color=white[bg]; [1:v]setpts=PTS-STARTPTS, scale=w=min(800\,600/ih*iw):h=-1[fg]; [bg][fg]overlay=x=trunc(W*0.75-w/2):y=trunc(H*0.5-h*0.5)" -c:v libx264 "$VIDEO_SBS" || TERMINATED=1
+    echo -e "\e[1mMerging videos...\e[0m"
+    if [[ -z "$DEBUG" ]]; then
+	ffmpeg $FORCE -hide_banner -i "$VIDEO_GRAPH" -i "$VIDEO" -f lavfi -i "anullsrc=cl=1" -shortest -filter_complex "[0:v]setpts=PTS-STARTPTS, pad=width=iw*2.15:height=ih*1.1:x=iw*0.05:y=0.05*ih:color=white[bg]; [1:v]setpts=PTS-STARTPTS, scale=w=min(800\,600/ih*iw):h=-1[fg]; [bg][fg]overlay=x=trunc(W*0.75-w/2):y=trunc(H*0.5-h*0.5)" -c:v libx264 "$VIDEO_SBS" || TERMINATED=1
+    else
+	ffmpeg $FORCE -hide_banner -i "$VIDEO_GRAPH" -i "$VIDEO" -f lavfi -i "anullsrc=cl=1" -shortest -filter_complex "[0:v]setpts=PTS-STARTPTS, pad=width=iw*2.15:height=ih*1.1:x=iw*0.05:y=0.05*ih:color=white[bg]; [1:v]setpts=PTS-STARTPTS, scale=w=min(800\,600/ih*iw):h=-1[fg]; [bg][fg]overlay=x=trunc(W*0.75-w/2):y=trunc(H*0.5-h*0.5)" -c:v libx264 "$VIDEO_SBS" || TERMINATED=1	
+    fi	
 
-if [[ "$TERMINATED" == "1" ]]; then
-    echo -e "\e[1mMerging videos...\e[0m \e[1m\e[91mfail \e[0m"
-    confirm "Delete \"$VIDEO_SBS\"?" && del_v2
-    confirm "Delete \"$VIDEO_GRAPH\"?" && del_v1
-    confirm "Delete all the generated graphs?" && del_png
-    clean_files
-    echo -e "\n\e[1m\e[91mTerminated:\e[0m Problem mergin videos\e[0m"
-    exit 2
-fi
+    if [[ "$TERMINATED" == "1" ]]; then
+	echo -e "\e[1mMerging videos...\e[0m \e[1m\e[91mfail \e[0m"
+	confirm "Delete \"$VIDEO_SBS\"?" && del_v2
+	confirm "Delete \"$VIDEO_GRAPH\"?" && del_v1
+	confirm "Delete all the generated graphs?" && del_png
+	clean_files
+	echo -e "\n\e[1m\e[91mTerminated:\e[0m Problem mergin videos\e[0m"
+	exit 2
+    fi
 
-echo -e "\r\e[1mMerging videos...\e[0m \e[92m\e[1mdone   \e[0m"
-del_png
-clean_files
-echo -e "\e[1m\e[92mFinished\e[0m"
+    echo -e "\r\e[1mMerging videos...\e[0m \e[92m\e[1mdone   \e[0m"
+	  del_png
+	  clean_files
+	  echo -e "\e[1m\e[92mFinished\e[0m"
